@@ -1,0 +1,8 @@
+#cloud-config
+package_update: true
+packages:
+- apache2
+- git
+runcmd:
+- systemctl enable --now apache2
+- echo 'H2P' > /var/www/html/index.html
