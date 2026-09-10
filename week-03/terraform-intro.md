@@ -10,7 +10,7 @@ Terraform is infrastructure-as-code. You describe what you want, Terraform figur
 
 ## Install
 
-shicorp.com/terraform/install)
+[developer.hashicorp.com/terraform/install](https://developer.hashicorp.com/terraform/install)
 
 Verify: `terraform version`
 
@@ -23,7 +23,7 @@ assignment-1/
 ├── main.tf
 ├── variables.tf
 ├── outputs.tf
-├── cloud-init.yaml    # your file from week 2
+├── init-mp.yaml       # your file from week 2
 └── .gitignore
 ```
 
@@ -97,10 +97,11 @@ The EC2 instance that uses it:
 
 ```hcl
 resource "aws_instance" "web" {
-  ami                    = var.ami_id
-  instance_type          = "t2.micro"
-  vpc_security_group_ids = [aws_security_group.web.id]
-  user_data              = file("cloud-init.yaml")
+  ami                         = var.ami_id
+  instance_type               = "t3.micro"
+  vpc_security_group_ids      = [aws_security_group.web.id]
+  associate_public_ip_address = true
+  user_data                   = file("init-mp.yaml")
 
   tags = {
     Name = "cs1660-week3"
@@ -108,7 +109,9 @@ resource "aws_instance" "web" {
 }
 ```
 
-`user_data = file("cloud-init.yaml")` -- that's the same config from last week. Same file, different runtime. AWS hands it to cloud-init on first boot exactly like Multipass did.
+`user_data = file("init-mp.yaml")` -- that's the same config from last week. Same file, different runtime. AWS hands it to cloud-init on first boot exactly like Multipass did.
+
+`associate_public_ip_address = true` ensures the instance gets a public IP. Without it, the default VPC subnet may not assign one and your output will be blank.
 
 ---
 
@@ -124,7 +127,7 @@ variable "region" {
 }
 
 variable "ami_id" {
-  description = "Ubuntu 22.04 LTS AMI (region-specific)"
+  description = "Ubuntu 24.04 LTS AMI (region-specific)"
   type        = string
 }
 ```
@@ -261,7 +264,7 @@ terraform init
 
 Terraform will detect the new backend and ask if you want to migrate existing local state to S3. Say yes. After that, `terraform.tfstate` on disk is no longer the source of truth -- S3 is.
 
-The bucket name needs to be globally unique. `cs1660-tfstate-<your-pitt-username>` is a reasonable convention.
+The bucket name needs to be globally unique. `itcc-tfstate-<your-pitt-username>` is a reasonable convention.
 
 ---
 
