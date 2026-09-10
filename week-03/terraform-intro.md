@@ -74,7 +74,7 @@ A security group that allows inbound HTTP:
 
 ```hcl
 resource "aws_security_group" "web" {
-  name        = "cs1660-web-sg"
+  name        = "itcc-web-sg"
   description = "Allow HTTP inbound"
 
   ingress {
@@ -104,7 +104,7 @@ resource "aws_instance" "web" {
   user_data                   = file("init-mp.yaml")
 
   tags = {
-    Name = "cs1660-week3"
+    Name = "itcc-week3"
   }
 }
 ```
