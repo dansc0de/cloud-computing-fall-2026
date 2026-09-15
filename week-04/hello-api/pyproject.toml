@@ -1,0 +1,23 @@
+[project]
+name = "hello-api"
+version = "0.1.0"
+description = "CS 1660 week 4 demo: a tiny FastAPI service to containerize"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "httpx>=0.27",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore:Using .httpx. with .starlette.testclient.",
+]

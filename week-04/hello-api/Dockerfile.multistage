@@ -1,0 +1,29 @@
+# Stage 1: build
+# Multi-stage build: uv and the build steps stay in the first stage.
+# The final image only gets the finished virtual environment and the code.
+FROM python:3.14-slim AS build
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+ENV UV_PYTHON=/usr/local/bin/python3.14 \
+    UV_PYTHON_DOWNLOADS=never
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+COPY . .
+RUN uv sync --frozen --no-dev
+
+# Stage 2: runtime
+# Must be the SAME base image as the build stage: .venv/bin/python is a
+# symlink to /usr/local/bin/python3.14, which has to exist here too.
+FROM python:3.14-slim AS runtime
+RUN useradd --create-home app
+WORKDIR /app
+
+# Only the built app crosses over. No uv, no build cache.
+# Files stay owned by root, so the app user can run the code but not modify it.
+COPY --from=build /app /app
+
+ENV PATH="/app/.venv/bin:$PATH"
+USER app
+EXPOSE 8080
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

@@ -1,0 +1,21 @@
+# Slow build: the app code is copied BEFORE dependencies are installed,
+# so any edit to main.py invalidates the dependency layer too.
+FROM python:3.14-slim
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+# Use the image's Python. Never download one: a uv-managed Python lands in
+# /root, which the non-root app user cannot read at runtime.
+ENV UV_PYTHON=/usr/local/bin/python3.14 \
+    UV_PYTHON_DOWNLOADS=never
+WORKDIR /app
+
+# Copy files explicitly (not COPY . .) so a local .venv or cache from
+# running uv on the host can never end up in the image.
+COPY pyproject.toml uv.lock .python-version main.py ./
+RUN uv sync --frozen --no-dev
+
+ENV PATH="/app/.venv/bin:$PATH"
+RUN useradd --create-home app
+USER app
+EXPOSE 8080
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]

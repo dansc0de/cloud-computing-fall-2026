@@ -1,0 +1,53 @@
+#cloud-config
+# CS 1660 / 2060 - Docker VM for Multipass
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - ca-certificates
+  - curl
+  - git
+  - jq
+
+write_files:
+  - path: /usr/local/bin/install-docker.sh
+    permissions: "0755"
+    content: |
+      #!/bin/sh
+      # Follows https://docs.docker.com/engine/install/ubuntu/
+      set -eu
+
+      install -m 0755 -d /etc/apt/keyrings
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+      chmod a+r /etc/apt/keyrings/docker.asc
+
+      ARCH="$(dpkg --print-architecture)"
+      CODENAME="$(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")"
+      echo "deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${CODENAME} stable" \
+        > /etc/apt/sources.list.d/docker.list
+
+      apt-get update
+      DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+      systemctl enable --now docker
+
+  # Rotate container logs so a chatty container cannot fill the 20G disk
+  - path: /etc/docker/daemon.json
+    permissions: "0644"
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": { "max-size": "10m", "max-file": "3" }
+      }
+
+runcmd:
+  - /usr/local/bin/install-docker.sh
+  # Let the default user run docker without sudo (takes effect on next login)
+  - usermod -aG docker ubuntu
+  # uv, installed system-wide so every user has it on PATH
+  - curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin UV_NO_MODIFY_PATH=1 sh
+  - docker version --format 'Docker {{.Server.Version}} ready' > /var/log/cs1660-docker.log 2>&1
+
+final_message: "CS 1660 Docker VM ready after $UPTIME seconds"
