@@ -1,0 +1,22 @@
+# Two services, one command. Only the proxy publishes a port;
+# the proxy reaches the model by its service name on the Compose network.
+services:
+  proxy:
+    build: proxy
+    ports:
+      - "8080:8080"
+    environment:
+      LLM_URL: http://llm:8000
+    depends_on:
+      llm:
+        condition: service_healthy
+
+  llm:
+    build: mock-llm
+    healthcheck:
+      # python:slim has no curl, so the check uses python
+      test: ["CMD", "python", "-c",
+             "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      retries: 10
+      start_period: 10s
