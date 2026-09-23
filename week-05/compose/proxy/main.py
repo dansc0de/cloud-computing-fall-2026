@@ -20,7 +20,7 @@ from pydantic import BaseModel
 
 LLM_URL = os.environ.get("LLM_URL", "http://llm:8000")
 
-app = FastAPI(title="proxy")
+app = FastAPI(title="proxy llm")
 
 USAGE: dict[str, dict[str, int]] = defaultdict(
     lambda: {"prompt_tokens": 0, "completion_tokens": 0, "request_count": 0}

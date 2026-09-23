@@ -1,4 +1,4 @@
 # cp terraform.tfvars.example terraform.tfvars and fill in your account number
-region      = "us-east-2"
-proxy_image = "123456789012.dkr.ecr.us-east-2.amazonaws.com/cs1660/proxy:v1"
-llm_image   = "123456789012.dkr.ecr.us-east-2.amazonaws.com/cs1660/mock-llm:v1"
+region      = "us-east-1"
+proxy_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/cs1660/proxy:v1"
+llm_image   = "123456789012.dkr.ecr.us-east-1.amazonaws.com/cs1660/mock-llm:v1"

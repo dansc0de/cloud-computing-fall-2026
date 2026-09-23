@@ -5,7 +5,7 @@ Two images go to AWS: the proxy and the mock LLM. They become the two containers
 ## Set up your shell
 
 ```bash
-export AWS_REGION=us-east-2
+export AWS_REGION=us-east-1
 export ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
 export REGISTRY=$ACCOUNT.dkr.ecr.$AWS_REGION.amazonaws.com
 echo $REGISTRY
@@ -35,7 +35,7 @@ Build for the platform you deploy to. Fargate tasks here are amd64.
 ```bash
 cd ../compose
 
-docker build --platform linux/amd64 -t $REGISTRY/cs1660/proxy:v1    ./proxy
+docker build --platform linux/amd64 -t $REGISTRY/cs1660/proxy:v1 ./proxy
 docker build --platform linux/amd64 -t $REGISTRY/cs1660/mock-llm:v1 ./mock-llm
 
 docker push $REGISTRY/cs1660/proxy:v1
@@ -74,6 +74,6 @@ aws ecr put-lifecycle-policy --repository-name cs1660/proxy --lifecycle-policy-t
 Keep the repositories for demo 3. To remove them at the end of the lab:
 
 ```bash
-aws ecr delete-repository --repository-name cs1660/proxy    --force
+aws ecr delete-repository --repository-name cs1660/proxy --force
 aws ecr delete-repository --repository-name cs1660/mock-llm --force
 ```

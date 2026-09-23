@@ -17,7 +17,7 @@ Inside the VM:
 ```bash
 docker compose version && aws --version && terraform version
 git clone https://github.com/dansc0de/cloud-computing-fall-2026.git
-cd cloud-computing-fall-2026/weeks/05-compose-ecr-ecs
+cd cloud-computing-fall-2026/week05/compose
 ```
 
 Configure AWS credentials the same way you did in week 3:
@@ -39,7 +39,8 @@ aws sts get-caller-identity
 
 ```bash
 cd fargate && terraform destroy
-aws ecr delete-repository --repository-name cs1660/proxy    --force
+# @note we need to use force because images exist in the repository
+aws ecr delete-repository --repository-name cs1660/proxy --force
 aws ecr delete-repository --repository-name cs1660/mock-llm --force
 ```
 

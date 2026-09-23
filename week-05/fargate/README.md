@@ -57,16 +57,6 @@ terraform apply -var desired_count=2
 
 Each task has its own ENI, its own IP, and its own copy of both containers.
 
-## Get a shell in a running container
-
-```bash
-TASK=$(aws ecs list-tasks --cluster cs1660-week5 --query 'taskArns[0]' --output text)
-aws ecs execute-command --cluster cs1660-week5 --task $TASK \
-  --container proxy --interactive --command "/bin/sh"
-```
-
-Inside: `env | grep AWS` shows the task metadata variables, not access keys.
-
 ## Clean up
 
 ```bash

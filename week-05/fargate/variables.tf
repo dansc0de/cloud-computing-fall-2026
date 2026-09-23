@@ -1,7 +1,7 @@
 variable "region" {
   description = "AWS region for every resource"
   type        = string
-  default     = "us-east-2"
+  default     = "us-east-1"
 }
 
 variable "name" {
@@ -11,7 +11,7 @@ variable "name" {
 }
 
 variable "proxy_image" {
-  description = "ECR URI of the proxy image, for example 1234.dkr.ecr.us-east-2.amazonaws.com/cs1660/proxy:v1"
+  description = "ECR URI of the proxy image, for example 1234.dkr.ecr.us-east-1.amazonaws.com/cs1660/proxy:v1"
   type        = string
 }
 
