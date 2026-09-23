@@ -1,0 +1,86 @@
+#cloud-config
+# CS 1660 / 2060 - Week 5 VM for Multipass (Docker + AWS CLI + Terraform + uv)
+#
+# Launch:
+#   multipass launch 24.04 -n in-class --cloud-init cloud-init.yaml
+#
+# Verify:
+#   multipass exec in-class -- cloud-init status --wait
+#   multipass shell in-class
+#   docker compose version && aws --version && terraform version
+
+package_update: true
+package_upgrade: false
+
+packages:
+  - ca-certificates
+  - curl
+  - git
+  - jq
+  - unzip
+
+write_files:
+  - path: /usr/local/bin/install-docker.sh
+    permissions: "0755"
+    content: |
+      #!/bin/sh
+      # Follows https://docs.docker.com/engine/install/ubuntu/
+      set -eu
+
+      install -m 0755 -d /etc/apt/keyrings
+      curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+      chmod a+r /etc/apt/keyrings/docker.asc
+
+      ARCH="$(dpkg --print-architecture)"
+      CODENAME="$(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")"
+      echo "deb [arch=${ARCH} signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu ${CODENAME} stable" \
+        > /etc/apt/sources.list.d/docker.list
+
+      apt-get update
+      DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+      systemctl enable --now docker
+
+  - path: /usr/local/bin/install-aws-terraform.sh
+    permissions: "0755"
+    content: |
+      #!/bin/sh
+      set -eu
+
+      # AWS CLI v2
+      ARCH="$(uname -m)"
+      curl -fsSL "https://awscli.amazonaws.com/awscli-exe-linux-${ARCH}.zip" -o /tmp/awscliv2.zip
+      unzip -q -o /tmp/awscliv2.zip -d /tmp
+      /tmp/aws/install --update
+      rm -rf /tmp/aws /tmp/awscliv2.zip
+
+      # Terraform, from HashiCorp's apt repository
+      install -m 0755 -d /etc/apt/keyrings
+      curl -fsSL https://apt.releases.hashicorp.com/gpg -o /etc/apt/keyrings/hashicorp.asc
+      chmod a+r /etc/apt/keyrings/hashicorp.asc
+
+      ARCH_DEB="$(dpkg --print-architecture)"
+      CODENAME="$(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")"
+      echo "deb [arch=${ARCH_DEB} signed-by=/etc/apt/keyrings/hashicorp.asc] https://apt.releases.hashicorp.com ${CODENAME} main" \
+        > /etc/apt/sources.list.d/hashicorp.list
+
+      apt-get update
+      DEBIAN_FRONTEND=noninteractive apt-get install -y terraform
+
+  # Cap container logs so a chatty stack cannot fill the disk
+  - path: /etc/docker/daemon.json
+    permissions: "0644"
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": { "max-size": "10m", "max-file": "3" }
+      }
+
+runcmd:
+  - /usr/local/bin/install-docker.sh
+  - /usr/local/bin/install-aws-terraform.sh
+  - usermod -aG docker ubuntu
+  - curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR=/usr/local/bin UV_NO_MODIFY_PATH=1 sh
+
+final_message: "CS 1660 week 5 VM ready after $UPTIME seconds"
