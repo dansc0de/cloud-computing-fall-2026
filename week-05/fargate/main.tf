@@ -13,10 +13,7 @@ provider "aws" {
   region = var.region
 }
 
-# ---------------------------------------------------------------------------
-# Network. We use the default VPC so week 5 stays about ECS. Real networking
-# (private subnets, NAT, VPC endpoints, ALB) comes in week 6.
-# ---------------------------------------------------------------------------
+# network — default vpc keeps week 5 focused on ecs; real networking in week 6
 data "aws_vpc" "default" {
   default = true
 }
@@ -55,10 +52,7 @@ resource "aws_cloudwatch_log_group" "app" {
   retention_in_days = 3
 }
 
-# ---------------------------------------------------------------------------
-# Two roles. Execution = the ECS agent pulling images and writing logs.
-# Task = your code calling AWS APIs at runtime.
-# ---------------------------------------------------------------------------
+# iam — execution role (image pulls + logs), task role (app's own AWS calls)
 data "aws_iam_policy_document" "ecs_assume" {
   statement {
     actions = ["sts:AssumeRole"]
@@ -85,8 +79,7 @@ resource "aws_iam_role" "task" {
   assume_role_policy = data.aws_iam_policy_document.ecs_assume.json
 }
 
-# The task role is what the application's own AWS calls would use. This app
-# makes none yet, so it only carries the permissions ECS Exec needs.
+# no app-level AWS calls yet — task role only carries ECS Exec permissions
 data "aws_iam_policy_document" "task" {
   statement {
     sid = "EcsExec"
@@ -108,9 +101,7 @@ resource "aws_iam_role_policy" "task" {
   policy = data.aws_iam_policy_document.task.json
 }
 
-# ---------------------------------------------------------------------------
-# Cluster, task definition, service
-# ---------------------------------------------------------------------------
+# cluster, task definition, service
 resource "aws_ecs_cluster" "this" {
   name = var.name
 }
@@ -143,7 +134,7 @@ resource "aws_ecs_task_definition" "app" {
       ]
 
       environment = [
-        # The sidecar shares this task's network namespace, so it is on localhost
+        # sidecar shares the task's network namespace, so localhost works
         { name = "LLM_URL", value = "http://localhost:8000" },
         { name = "LOG_LEVEL", value = "info" },
       ]
@@ -208,6 +199,6 @@ resource "aws_ecs_service" "app" {
   network_configuration {
     subnets          = data.aws_subnets.default.ids
     security_groups  = [aws_security_group.task.id]
-    assign_public_ip = true # no NAT gateway in this demo, so the task needs a route to ECR
+    assign_public_ip = true # no NAT in this demo; task needs a public route to ECR
   }
 }
