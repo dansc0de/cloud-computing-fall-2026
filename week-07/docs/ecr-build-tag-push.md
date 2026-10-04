@@ -39,27 +39,12 @@ aws ecr get-login-password --region "$REGION" \
   | docker login --username AWS --password-stdin "${REPO%%/*}"
 ```
 
-## 3. Build the image
+## 3. Build and push
 
 ```bash
-docker build --platform linux/amd64 --provenance=false -t "$NAME" .
-```
-
-Use `linux/arm64` on Apple Silicon / ARM machines.
-
-`--provenance=false` prevents buildx from pushing an image index with an attestation manifest that Lambda rejects.
-
-## 4. Tag the image
-
-```bash
-TAG="$(cat Dockerfile src/handler.py | sha256sum | cut -c1-12)"
-docker tag "$NAME" "$REPO:$TAG"
-```
-
-The content-hash tag means the same code always produces the same tag — a code change produces a new one.
-
-## 5. Push to ECR
-
-```bash
+TAG="$(git rev-parse --short HEAD)"
+docker build -t "$REPO:$TAG" .
 docker push "$REPO:$TAG"
 ```
+
+This builds for your host architecture. Set the terraform `architecture` variable to match (`x86_64` on Intel/AMD, `arm64` on Apple Silicon — defaults to `x86_64`).

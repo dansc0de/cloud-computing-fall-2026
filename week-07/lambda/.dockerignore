@@ -1,2 +1,5 @@
-src
-!src/handler.py
+.terraform
+*.tfstate
+*.tfstate.backup
+*.tfvars
+.terraform.lock.hcl

@@ -3,10 +3,15 @@ variable "region" {
   default = "us-east-1"
 }
 
+variable "ecr_repo_name" {
+  description = "Name of the ECR repository (created before terraform apply)"
+  type        = string
+  default     = "lambda-cost-usage"
+}
+
 variable "image_tag" {
   description = "Tag of the image in ECR. deploy.sh sets it to a hash of the Dockerfile and source."
   type        = string
-  default     = ""
 }
 
 variable "architecture" {

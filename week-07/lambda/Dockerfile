@@ -1,9 +1,24 @@
-# AWS's Lambda base image: Python 3.14 plus the runtime interface client that
-# talks to the Lambda service. There is no web server and no port to EXPOSE.
+FROM ghcr.io/astral-sh/uv:0.12.23 AS uv
+
+# build stage — install deps into the lambda task root
+FROM public.ecr.aws/lambda/python:3.14 AS builder
+
+ENV UV_COMPILE_BYTECODE=1
+ENV UV_NO_INSTALLER_METADATA=1
+ENV UV_LINK_MODE=copy
+
+# cache busts only when pyproject.toml or uv.lock change, not on app code edits
+RUN --mount=from=uv,source=/uv,target=/bin/uv \
+    --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv export --frozen --no-emit-workspace --no-dev --no-editable -o requirements.txt && \
+    uv pip install -r requirements.txt --target "${LAMBDA_TASK_ROOT}"
+
+# final stage the lambda runtime already runs as an unprivileged user
 FROM public.ecr.aws/lambda/python:3.14
 
-# ${LAMBDA_TASK_ROOT} is /var/task, where the runtime looks for your code.
-COPY src/handler.py ${LAMBDA_TASK_ROOT}/
+COPY --from=builder ${LAMBDA_TASK_ROOT} ${LAMBDA_TASK_ROOT}
+COPY ./app ${LAMBDA_TASK_ROOT}/app
 
-# Not a process to start: the handler to call, as file.function.
-CMD ["handler.handler"]
+CMD ["app.handler.handler"]
