@@ -6,6 +6,13 @@ terraform {
       version = "~> 6.0"
     }
   }
+
+  # @note: remote state config
+  backend "s3" {
+    bucket = "itcc-tfstate-dpm79"
+    key    = "week-06/terraform.tfstate"
+    region = "us-east-1"
+  }
 }
 
 provider "aws" {
